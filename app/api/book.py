@@ -2,7 +2,7 @@ from flask import request, current_app
 from flask_restx import Resource, Namespace
 
 def init_book_api(api, models):
-    ns = Namespace(current_app.config['API_PREFIX'], description='图书馆管理系统接口')
+    ns = Namespace('/test', description='图书馆管理系统接口')
     
     @ns.route('/check_book_can_renew')
     class BookRenew(Resource):
