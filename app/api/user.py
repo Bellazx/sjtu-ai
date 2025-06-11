@@ -93,7 +93,8 @@ def get_merged_user_info(qry_str):
                 'userName': gate_user.get('username'),
                 'cardid': gate_user.get('cardid'),
                 'cardno': gate_user.get('cardno'),
-                'userState': '未知'
+                'userState': '未知',
+                'fee': '未知'
             }
         target_user['isNormal'] = '正常' if gate_user.get('isNormal') == 1 else '异常'
         if target_user['userState'] != '未知':
@@ -191,7 +192,7 @@ def format_user_info(user_info):
         f"读者身份有效期: {expire_date}",
         f"读者通讯有效期: {address_expire_date}",
         f"身份类型: {type_mapping.get(user_type, user_type)}",
-        f"逾期费: {user.get('fee', '0')}元",
+        f"逾期费: {user.get('fee')}",
         "=" * 50
     ]
     print('\n'.join(lines))
@@ -337,7 +338,7 @@ def init_user_api(api, models):
 
 if __name__ == '__main__':
     # 示例查询卡号
-    query_cardno = "61396"  # 可以修改为需要查询的卡号
+    query_cardno = "64900"  # 可以修改为需要查询的卡号
 
     # 获取用户信息
     merged_info = get_merged_user_info(query_cardno)
