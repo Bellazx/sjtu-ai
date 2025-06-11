@@ -91,8 +91,8 @@ def get_merged_user_info(qry_str):
         if target_user is None:
             target_user = {
                 'userName': gate_user.get('username'),
-                'cardId': gate_user.get('cardid'),
-                'cardNo': gate_user.get('cardno'),
+                'cardid': gate_user.get('cardid'),
+                'cardno': gate_user.get('cardno'),
                 'userState': '未知'
             }
         target_user['isNormal'] = '正常' if gate_user.get('isNormal') == 1 else '异常'
@@ -175,9 +175,9 @@ def format_user_info(user_info):
         f"查询状态: {user_info.get('message', '未知')}",
         "-" * 50,
         f"姓名: {user.get('userName', '未知')}",
-        f"学工号: {user.get('cardNo', '未知')}",
+        f"学工号: {user.get('cardno', '未知')}",
         f"系统ID: {user.get('sysId', '未知')}",
-        f"物理卡号: {user.get('cardId', '未知')}",
+        f"物理卡号: {user.get('cardid', '未知')}",
         f"NFC ID: {user.get('nfcId', '未知')}",
         f"邮箱: {user.get('userEmail', '未知')}",
         f"电话: {user.get('userTel', '未知')}",
@@ -337,7 +337,7 @@ def init_user_api(api, models):
 
 if __name__ == '__main__':
     # 示例查询卡号
-    query_cardno = "64900"  # 可以修改为需要查询的卡号
+    query_cardno = "61396"  # 可以修改为需要查询的卡号
 
     # 获取用户信息
     merged_info = get_merged_user_info(query_cardno)
