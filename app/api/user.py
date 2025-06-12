@@ -1,24 +1,9 @@
 from flask import request, current_app
 from flask_restx import Resource, Namespace
-import requests
 import json
+from datetime import datetime
 
-
-def call_api(url, payload):
-    """通用API调用函数"""
-    try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers={'Content-Type': 'application/json'},
-            timeout=10
-        )
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        print(f"接口调用失败({url}): {str(e)}")
-        return None
-
+from api import call_api
 
 def call_basic_info(qry_str):
     payload = {
@@ -50,6 +35,7 @@ def call_basic_info(qry_str):
         print(f"未找到卡号为 {qry_str} 的用户基本信息")
         return None
     return target_user
+
 
 def call_gate_info(qry_str):
     payload = {
@@ -87,6 +73,13 @@ def get_merged_user_info(qry_str):
     target_user = call_basic_info(qry_str)
     gate_user = call_gate_info(qry_str)
 
+    if gate_user is None and target_user is None:
+        result = {
+            'success': False,
+            'message': '获取用户信息失败，未查询到有效信息'
+        }
+        return result
+
     if gate_user:
         if target_user is None:
             target_user = {
@@ -108,13 +101,14 @@ def get_merged_user_info(qry_str):
         print("门禁信息获取失败，仅返回基本信息")
 
     # 构造最终返回结构
-    result = {
+    user_info_res = {
         'success': True,
         'message': '查询成功',
-        'userInfo': target_user
+        'data': target_user
     }
-
+    result = format_user_info(user_info_res)
     return result
+
 
 # def can_book_seat(qry_str):
 #     """获取是否有预约座位权限"""
@@ -124,13 +118,16 @@ def get_merged_user_info(qry_str):
 #     return False
 
 
-def format_user_info(user_info):
+def format_user_info(user_info_res):
     """格式化打印用户信息"""
-    if not user_info or not user_info.get('success'):
-        print("没有可用的用户信息")
-        return
+    if not user_info_res or not user_info_res.get('success'):
+        result = {
+            'success': False,
+            'message': '获取用户信息失败，未查询到有效信息'
+        }
+        return result
 
-    user = user_info.get('userInfo', {})
+    user = user_info_res.get('data', {})
     user_type = user.get('gateInfo', {}).get('usertype', '未知').lower()
 
     # 身份类型中文映射
@@ -167,13 +164,35 @@ def format_user_info(user_info):
         except:
             return original_date  # 转换失败返回原值
 
+    def format_fee(fee_value):
+        """格式化逾期费字段：去掉负号但保留0.00"""
+        if not fee_value:
+            return "0.00"
+
+        # 处理字符串类型的费用
+        if isinstance(fee_value, str):
+            # 去掉可能的¥、$等货币符号
+            cleaned = fee_value.strip().lstrip('¥$€')
+            # 如果是负数则去掉负号
+            if cleaned.startswith('-'):
+                return cleaned[1:]
+            return cleaned
+
+        # 处理数字类型的费用
+        if isinstance(fee_value, (int, float)):
+            return str(abs(fee_value)) if fee_value < 0 else str(fee_value)
+
+        return "0.00"  # 默认值
+
     # 转换有效期
-    expire_date = format_date(user.get('userExpireDate'))
-    address_expire_date = format_date(user.get('addressExpireDate'))
+    expire_date = format_date(user.get('userExpireDate', ''))
+    address_expire_date = format_date(user.get('addressExpireDate', ''))
+    # 转换逾期费
+    fee = format_fee(user.get('fee', ''))
 
     lines = [
         "\n【用户信息汇总】",
-        f"查询状态: {user_info.get('message', '未知')}",
+        f"查询状态: {user_info_res.get('message', '未知')}",
         "-" * 50,
         f"姓名: {user.get('userName', '未知')}",
         f"学工号: {user.get('cardno', '未知')}",
@@ -192,11 +211,74 @@ def format_user_info(user_info):
         f"读者身份有效期: {expire_date}",
         f"读者通讯有效期: {address_expire_date}",
         f"身份类型: {type_mapping.get(user_type, user_type)}",
-        f"逾期费: {user.get('fee')}",
+        f"逾期费: {fee}",
         "=" * 50
     ]
     print('\n'.join(lines))
-    return '\n'.join(lines)
+    result = {
+        'success': True,
+        'message': '查询成功',
+        'data': '\n'.join(lines)
+    }
+    return result
+
+
+def format_datetime(date_str, time_str):
+    """将日期和时间格式化为 yyyy年xx月xx日 x时x分"""
+    if not date_str or not time_str:
+        return ""
+
+    try:
+        date = datetime.strptime(date_str, "%Y%m%d")
+        time = f"{time_str[:2]}:{time_str[2:]}" if len(time_str) == 4 else time_str
+        return date.strftime("%Y年%m月%d日 ") + time.replace(":", "时") + "分"
+    except:
+        return ""
+
+def call_borrow_book_list_api(user_id):
+    payload = {
+        "userCode": "dingzixuan",
+        "userPwd": "F3F8828238A7F0DDD445FE58BAF94AB3",
+        "qryType": 1,
+        "qryStr": user_id
+    }
+    # 调用第二个接口获取门禁信息
+    borrow_info_res = call_api(
+        "http://10.119.4.239/docaffiresinterface/getBorrowBookListById.ashx",
+        payload
+    )
+    # 验证接口响应
+    if not borrow_info_res or borrow_info_res.get('resStr') != '1':
+        print("获取借书列表失败" + borrow_info_res.get('msgStr'))
+        return {
+            'success': False,
+            'message': "获取借书列表失败" + borrow_info_res.get('msgStr')
+        }
+    borrow_info = borrow_info_res.get('retBook')
+    """转换原始JSON数据到API模型格式"""
+    result = []
+    for item in borrow_info:
+        transformed = {
+            'source': item.get('srcUnit', ''),
+            'barcode': item.get('barcode', ''),
+            'book_name': item.get('bookname', ''),
+            'book_author': item.get('bookauthor', ''),
+            'publish': item.get('publish', ''),
+            'pub_year': item.get('pubYear', ''),
+            'sub_library_code': item.get('sublibrary', ''),
+            'collection_code': item.get('collection', ''),
+            'borrow_time': format_datetime(item.get('borrowDate'), item.get('borrowHour')),
+            'should_return_time': format_datetime(item.get('returnEndDate'), item.get('returnEndHour')),
+            'call_no': item.get('callno', ''),
+            'isbn': item.get('isbn', ''),
+            'material': item.get('material', '')
+        }
+        result.append(transformed)
+    return {
+        'success': True,
+        'message': '查询成功',
+        'data': result
+    }
 
 
 def init_user_api(api, models):
@@ -205,21 +287,20 @@ def init_user_api(api, models):
     @ns.route('/get_user_info')
     class UserInfo(Resource):
         @ns.doc('get_user_info')
-        @ns.param('user_id', '用户唯一标识符', required=True)
-        @ns.response(200, '成功', models['user_info_response'])
+        @ns.desciption('通过用户学工号查询用户信息，包含姓名、学工号、系统ID、物理卡号、NFC ID、邮箱、电话、进馆权限、借阅权限、部门、身份有效期、通讯有效期、身份类型、逾期费等信息')
+        @ns.param('user_id', '用户学工号', required=True)
+        @ns.response(200, '成功')
         @ns.response(400, '错误', models['error_model'])
         def get(self):
             """获取用户信息接口"""
             user_id = request.args.get('user_id')
             if not user_id:
                 return {
-                    "error": "user_id is required",
-                    "status": "error"
+                    "message": "user_id is required",
+                    "success": False
                 }, 400
 
-            user_info = get_merged_user_info(user_id)
-
-            return format_user_info(user_info)
+            return get_merged_user_info(user_id)
             #
             #
             # if user_id == "user_1234567890":
@@ -286,7 +367,8 @@ def init_user_api(api, models):
     @ns.route('/get_user_borrow_info')
     class UserBorrowInfo(Resource):
         @ns.doc('get_user_borrow_info')
-        @ns.param('user_id', '用户唯一标识符', required=True)
+        @ns.desciption('通过用户学工号获取在借所有资源的信息，根据应还时间来判断是否过期/逾期')
+        @ns.param('user_id', '用户学工号', required=True)
         @ns.response(200, '成功', models['borrow_info_response'])
         @ns.response(400, '错误', models['error_model'])
         def get(self):
@@ -294,55 +376,57 @@ def init_user_api(api, models):
             user_id = request.args.get('user_id')
             if not user_id:
                 return {
-                    "error": "user_id is required",
-                    "status": "error"
+                    "message": "user_id is required",
+                    "success": False
                 }, 400
-            if user_id == "user_1234567890":
-                return {
-                    "data": {
-                        "borrow_info": [{
-                            "book_id": "book_1234567890",
-                            "book_name": "Book 1",
-                            "borrow_time": "2024-01-01 12:00:00",
-                            "borrow_end_time": "2025-01-01 12:00:00",
-                            "borrow_status": "success",
-                            "borrow_user_id": "user_1234567890",
-                        }, {
-                            "book_id": "book_1234567891",
-                            "book_name": "Book 2",
-                            "borrow_time": "2024-01-01 12:00:00",
-                            "borrow_end_time": "2026-01-01 12:00:00",
-                            "borrow_status": "success",
-                            "borrow_user_id": "user_1234567891",
-                        }]
-                    },
-                    "status": "success"
-                }
-            else:
-                return {
-                    "data": {
-                        "borrow_info": [{
-                            "book_id": "book_1234567890",
-                            "book_name": "Book 1",
-                            "borrow_time": "2024-01-01 12:00:00",
-                            "borrow_end_time": "2026-01-01 12:00:00",
-                            "borrow_status": "success",
-                            "borrow_user_id": "user_1234567890",
-                        }]
-                    },
-                    "status": "success"
-                }
+
+            return call_borrow_book_list_api(user_id)
+            # if user_id == "user_1234567890":
+            #     return {
+            #         "data": {
+            #             "borrow_info": [{
+            #                 "book_id": "book_1234567890",
+            #                 "book_name": "Book 1",
+            #                 "borrow_time": "2024-01-01 12:00:00",
+            #                 "borrow_end_time": "2025-01-01 12:00:00",
+            #                 "borrow_status": "success",
+            #                 "borrow_user_id": "user_1234567890",
+            #             }, {
+            #                 "book_id": "book_1234567891",
+            #                 "book_name": "Book 2",
+            #                 "borrow_time": "2024-01-01 12:00:00",
+            #                 "borrow_end_time": "2026-01-01 12:00:00",
+            #                 "borrow_status": "success",
+            #                 "borrow_user_id": "user_1234567891",
+            #             }]
+            #         },
+            #         "status": "success"
+            #     }
+            # else:
+            #     return {
+            #         "data": {
+            #             "borrow_info": [{
+            #                 "book_id": "book_1234567890",
+            #                 "book_name": "Book 1",
+            #                 "borrow_time": "2024-01-01 12:00:00",
+            #                 "borrow_end_time": "2026-01-01 12:00:00",
+            #                 "borrow_status": "success",
+            #                 "borrow_user_id": "user_1234567890",
+            #             }]
+            #         },
+            #         "status": "success"
+            #     }
 
     return ns
 
 
 if __name__ == '__main__':
     # 示例查询卡号
-    query_cardno = "64900"  # 可以修改为需要查询的卡号
+    query_cardno = "61396"  # 可以修改为需要查询的卡号
 
     # 获取用户信息
     merged_info = get_merged_user_info(query_cardno)
-
-    # 打印结果
-    if merged_info:
-        format_user_info(merged_info)
+    import pprint
+    pprint.pprint(merged_info)
+    # result = call_borrow_book_list_api(query_cardno)
+    # pprint.pprint(result)
