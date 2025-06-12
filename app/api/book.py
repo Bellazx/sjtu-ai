@@ -1,6 +1,6 @@
 from flask import request, current_app
 from flask_restx import Resource, Namespace
-from api import call_api
+from app.api.api import call_api
 
 
 def call_book_renew_api(book_id):
@@ -58,12 +58,11 @@ def init_book_api(api, models):
     @ns.route('/check_book_can_renew')
     class BookRenew(Resource):
         @ns.doc('check_book_can_renew')
-        @ns.description('根据条码判断图书是否可以被续借')
         @ns.param('book_id', '图书条码', required=True)
         @ns.response(200, '成功', models['renew_check_response'])
         @ns.response(400, '错误', models['error_model'])
         def get(self):
-            """检查图书是否可以续借"""
+            """检查图书是否可以续借,根据条码判断图书是否可以被续借"""
             book_id = request.args.get('book_id')
             if not book_id:
                 return {

@@ -6,6 +6,7 @@ from app.models.schemas import init_models
 from app.api.user import init_user_api
 from app.api.book import init_book_api
 from app.api.room import init_room_api
+from app.api.api import call_api
 
 def create_app():
     app = Flask(__name__)

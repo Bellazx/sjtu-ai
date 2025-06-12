@@ -3,7 +3,7 @@ from flask_restx import Resource, Namespace
 import json
 from datetime import datetime
 
-from api import call_api
+from app.api.api import call_api
 
 def call_basic_info(qry_str):
     payload = {
@@ -287,12 +287,11 @@ def init_user_api(api, models):
     @ns.route('/get_user_info')
     class UserInfo(Resource):
         @ns.doc('get_user_info')
-        @ns.desciption('通过用户学工号查询用户信息，包含姓名、学工号、系统ID、物理卡号、NFC ID、邮箱、电话、进馆权限、借阅权限、部门、身份有效期、通讯有效期、身份类型、逾期费等信息')
         @ns.param('user_id', '用户学工号', required=True)
         @ns.response(200, '成功')
         @ns.response(400, '错误', models['error_model'])
         def get(self):
-            """获取用户信息接口"""
+            """获取用户信息接口,通过用户学工号查询用户信息，包含姓名、学工号、系统ID、物理卡号、NFC ID、邮箱、电话、进馆权限、借阅权限、部门、身份有效期、通讯有效期、身份类型、逾期费等信息"""
             user_id = request.args.get('user_id')
             if not user_id:
                 return {
@@ -367,12 +366,11 @@ def init_user_api(api, models):
     @ns.route('/get_user_borrow_info')
     class UserBorrowInfo(Resource):
         @ns.doc('get_user_borrow_info')
-        @ns.desciption('通过用户学工号获取在借所有资源的信息，根据应还时间来判断是否过期/逾期')
         @ns.param('user_id', '用户学工号', required=True)
         @ns.response(200, '成功', models['borrow_info_response'])
         @ns.response(400, '错误', models['error_model'])
         def get(self):
-            """获取用户借阅信息"""
+            """获取用户借阅信息,通过用户学工号获取在借所有资源的信息，根据应还时间来判断是否过期/逾期"""
             user_id = request.args.get('user_id')
             if not user_id:
                 return {
