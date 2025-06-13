@@ -1,13 +1,18 @@
+import sys
+from pathlib import Path
 from app import create_app
 import yaml
-import json
+
+# 设置项目根目录
+BASE_DIR = Path(__file__).parent
+sys.path.insert(0, str(BASE_DIR))
 
 app = create_app()
 with app.app_context():
     with app.test_request_context():
-        # 获取完整的 OpenAPI 规范
+    # 获取完整的 OpenAPI 规范
         openapi_spec = app.api.__schema__
-        
+
         # 转换为标准 OpenAPI 格式
         spec = {
             "openapi": "3.0.0",
@@ -18,7 +23,7 @@ with app.app_context():
             },
             "servers": [
                 {
-                    "url": "https://proddev.hailuoai.com",
+                    "url": "http://172.20.0.3:8888",
                     "description": "本地开发服务器"
                 }
             ],
@@ -53,8 +58,8 @@ with app.app_context():
                                     "schema": {
                                         "type": "object",
                                         "properties": {
-                                            "error": {"type": "string"},
-                                            "status": {"type": "string"}
+                                            "message": {"type": "string"},
+                                            "success": {"type": "boolean"}
                                         }
                                     }
                                 }
@@ -66,10 +71,10 @@ with app.app_context():
         # 处理模型定义
         for name, schema in openapi_spec.get("definitions", {}).items():
             spec["components"]["schemas"][name] = schema
-        
+
         # 将规范转换为 YAML 格式
         yaml_spec = yaml.dump(spec, allow_unicode=True, sort_keys=False, default_flow_style=False)
-        
+
         # 保存到文件
         with open('openapi.yaml', 'w', encoding='utf-8') as f:
             f.write(yaml_spec)

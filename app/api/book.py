@@ -1,6 +1,6 @@
 from flask import request, current_app
 from flask_restx import Resource, Namespace
-from app.api.api import call_api
+from .api import call_api
 
 
 def call_book_renew_api(book_id):

@@ -3,12 +3,12 @@ from flask_restx import Resource, Namespace
 import json
 from datetime import datetime
 
-from app.api.api import call_api
+from .api import call_api
 
 def call_basic_info(qry_str):
     payload = {
-        "userCode": "dingzixuan",
-        "userPwd": "F3F8828238A7F0DDD445FE58BAF94AB3",
+        "userCode": current_app.config["API_USERCODE"],
+        "userPwd": current_app.config["API_PWD"],
         "qryType": 1,
         "qryStr": qry_str
     }
@@ -110,12 +110,21 @@ def get_merged_user_info(qry_str):
     return result
 
 
-# def can_book_seat(qry_str):
-#     """获取是否有预约座位权限"""
-#     gate_user = call_gate_info(qry_str)
-#     if gate_user:
-#         return config.can_book_seat(gate_user.get('usertype'))
-#     return False
+def can_book_seat(qry_str):
+    """获取是否有预约座位权限"""
+    gate_user = call_gate_info(qry_str)
+    if gate_user:
+        return {
+        'success': True,
+        'message': '查询成功',
+        'data':{
+            'can_book_seat': current_app.config.Config.can_book_seat(gate_user.get('usertype'))
+        }
+    }
+    return {
+            'success': False,
+            'message': '获取用户信息失败，未查询到有效信息'
+        }
 
 
 def format_user_info(user_info_res):
@@ -136,7 +145,7 @@ def format_user_info(user_info_res):
         'student': '学生',
         'yxy': '医学院教职工',
         'fs': '附属单位职工',
-        'vip': 'VIP',
+        'vip': '贵宾',
         'postphd': '博士后',
         'external_teacher': '外聘教师',
         'summer': '暑期生',
@@ -235,6 +244,7 @@ def format_datetime(date_str, time_str):
     except:
         return ""
 
+
 def call_borrow_book_list_api(user_id):
     payload = {
         "userCode": "dingzixuan",
@@ -276,7 +286,7 @@ def call_borrow_book_list_api(user_id):
         result.append(transformed)
     return {
         'success': True,
-        'message': '查询成功',
+        'message': '查询成功，当前用户在借书本（资源）共' + str(len(result)) + '本',
         'data': result
     }
 
@@ -415,6 +425,22 @@ def init_user_api(api, models):
             #         "status": "success"
             #     }
 
+    @ns.route('/can_book_seat')
+    class UserBorrowInfo(Resource):
+        @ns.doc('can_book_seat')
+        @ns.param('user_id', '用户学工号', required=True)
+        @ns.response(200, '成功', models['reserve_check_response'])
+        @ns.response(400, '错误', models['error_model'])
+        def get(self):
+            """获取用户能否预约（含全媒体）,通过用户学工号获取是否有预约（含全媒体）权限"""
+            user_id = request.args.get('user_id')
+            if not user_id:
+                return {
+                    "message": "user_id is required",
+                    "success": False
+                }, 400
+
+            return can_book_seat(user_id)
     return ns
 
 
@@ -425,6 +451,7 @@ if __name__ == '__main__':
     # 获取用户信息
     merged_info = get_merged_user_info(query_cardno)
     import pprint
+
     pprint.pprint(merged_info)
-    # result = call_borrow_book_list_api(query_cardno)
-    # pprint.pprint(result)
+    result = call_borrow_book_list_api(query_cardno)
+    pprint.pprint(result)

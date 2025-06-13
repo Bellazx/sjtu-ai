@@ -67,7 +67,7 @@ def init_models(api):
 
     # 预约检查响应模型
     reserve_check = api.model('ReserveCheck', {
-        'can_reserve_room': fields.Boolean(description='是否可以预约')
+        'can_book_seat': fields.Boolean(description='是否可以预约')
     })
 
     # 通用响应模型

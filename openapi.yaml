@@ -4,18 +4,18 @@ info:
   description: 图书馆管理系统的API接口文档
   version: 1.0.0
 servers:
-- url: https://proddev.hailuoai.com
+- url: http://172.20.0.3:8888
   description: 本地开发服务器
 paths:
-  /test/check_book_can_renew:
+  //test/check_book_can_renew:
     get:
-      summary: 检查图书是否可以续借
+      summary: 检查图书是否可以续借,根据条码判断图书是否可以被续借
       description: ''
       operationId: check_book_can_renew
       parameters:
       - required: true
         in: query
-        description: 图书唯一标识符
+        description: 图书条码
         name: book_id
         type: string
       responses:
@@ -32,19 +32,19 @@ paths:
               schema:
                 type: object
                 properties:
-                  error:
+                  message:
                     type: string
-                  status:
-                    type: string
-  /test/check_user_can_reserve_room:
+                  success:
+                    type: boolean
+  /test/can_book_seat:
     get:
-      summary: 检查用户是否可以预约座位
+      summary: 获取用户能否预约（含全媒体）,通过用户学工号获取是否有预约（含全媒体）权限
       description: ''
-      operationId: check_user_can_reserve_room
+      operationId: can_book_seat
       parameters:
       - required: true
         in: query
-        description: 用户唯一标识符
+        description: 用户学工号
         name: user_id
         type: string
       responses:
@@ -61,19 +61,19 @@ paths:
               schema:
                 type: object
                 properties:
-                  error:
+                  message:
                     type: string
-                  status:
-                    type: string
+                  success:
+                    type: boolean
   /test/get_user_borrow_info:
     get:
-      summary: 获取用户借阅信息
+      summary: 获取用户借阅信息,通过用户学工号获取在借所有资源的信息，根据应还时间来判断是否过期/逾期
       description: ''
       operationId: get_user_borrow_info
       parameters:
       - required: true
         in: query
-        description: 用户唯一标识符
+        description: 用户学工号
         name: user_id
         type: string
       responses:
@@ -90,19 +90,19 @@ paths:
               schema:
                 type: object
                 properties:
-                  error:
+                  message:
                     type: string
-                  status:
-                    type: string
+                  success:
+                    type: boolean
   /test/get_user_info:
     get:
-      summary: 获取用户信息接口
+      summary: 获取用户信息接口,通过用户学工号查询用户信息，包含姓名、学工号、系统ID、物理卡号、NFC ID、邮箱、电话、进馆权限、借阅权限、部门、身份有效期、通讯有效期、身份类型、逾期费等信息
       description: ''
       operationId: get_user_info
       parameters:
       - required: true
         in: query
-        description: 用户唯一标识符
+        description: 用户学工号
         name: user_id
         type: string
       responses:
@@ -110,8 +110,7 @@ paths:
           description: 成功
           content:
             application/json:
-              schema:
-                $ref: '#/definitions/UserInfoResponse'
+              schema: {}
         '400':
           description: 请求参数错误
           content:
@@ -119,95 +118,30 @@ paths:
               schema:
                 type: object
                 properties:
-                  error:
+                  message:
                     type: string
-                  status:
-                    type: string
-  /test/get_user_reserve_info:
-    get:
-      summary: 获取用户预约信息
-      description: ''
-      operationId: get_user_reserve_info
-      parameters:
-      - required: true
-        in: query
-        description: 用户唯一标识符
-        name: user_id
-        type: string
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/definitions/ReserveInfoResponse'
-        '400':
-          description: 请求参数错误
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  status:
-                    type: string
+                  success:
+                    type: boolean
 components:
   schemas:
     Error:
       properties:
-        error:
+        message:
           type: string
           description: 错误信息
-        status:
-          type: string
+        success:
+          type: boolean
           description: 错误状态
-      type: object
-    UserInfoResponse:
-      properties:
-        data:
-          $ref: '#/definitions/UserInfo'
-        status:
-          type: string
-          description: 响应状态
-      type: object
-    UserInfo:
-      properties:
-        user_id:
-          type: string
-          description: 用户唯一标识符
-        user_name:
-          type: string
-          description: 用户姓名
-        user_email:
-          type: string
-          description: 用户邮箱地址
-        user_phone:
-          type: string
-          description: 用户电话号码
-        user_address:
-          type: string
-          description: 用户地址
-        user_status:
-          type: string
-          description: 用户状态
-        permission:
-          type: string
-          description: 用户权限类型
-        user_period_of_validity:
-          type: string
-          format: date-time
-          description: 用户有效期
-        ALeph_wallet:
-          type: number
-          description: 用户钱包余额
       type: object
     BorrowInfoResponse:
       properties:
         data:
           $ref: '#/definitions/BorrowInfoList'
-        status:
+        message:
           type: string
+          description: 响应信息
+        success:
+          type: boolean
           description: 响应状态
       type: object
     BorrowInfoList:
@@ -219,33 +153,72 @@ components:
       type: object
     BorrowInfo:
       properties:
-        book_id:
+        source:
           type: string
-          description: 图书ID
+          description: 数据来源
+        barcode:
+          type: string
+          description: 条码
         book_name:
           type: string
-          description: 图书名称
+          description: 题名
+        book_author:
+          type: string
+          description: 责任者
+        publish:
+          type: string
+          description: 出版社
+        pub_year:
+          type: string
+          description: 出版年份
+        sub_library_code:
+          type: string
+          description: 分馆代码
+        collection_code:
+          type: string
+          description: 馆藏地代码
         borrow_time:
           type: string
-          format: date-time
           description: 借阅时间
-        borrow_end_time:
+        should_return_time:
           type: string
-          format: date-time
           description: 应还时间
-        borrow_status:
+        call_no:
           type: string
-          description: 借阅状态
-        borrow_user_id:
+          description: 索书号
+        isbn:
           type: string
-          description: 借阅用户ID
+          description: isbn号
+        material:
+          type: string
+          description: 介质类型
+      type: object
+    ReserveCheckResponse:
+      properties:
+        data:
+          $ref: '#/definitions/ReserveCheck'
+        message:
+          type: string
+          description: 响应信息
+        success:
+          type: boolean
+          description: 响应状态
+      type: object
+    ReserveCheck:
+      properties:
+        can_book_seat:
+          type: boolean
+          description: 是否可以预约
       type: object
     RenewCheckResponse:
       properties:
         data:
           $ref: '#/definitions/RenewCheck'
-        status:
+        message:
           type: string
+          description: 响应信息
+        success:
+          type: boolean
           description: 响应状态
       type: object
     RenewCheck:
@@ -253,64 +226,22 @@ components:
         can_renew:
           type: boolean
           description: 是否可以续借
-      type: object
-    ReserveCheckResponse:
-      properties:
-        data:
-          $ref: '#/definitions/ReserveCheck'
-        status:
+        call_no:
           type: string
-          description: 响应状态
-      type: object
-    ReserveCheck:
-      properties:
-        can_reserve_room:
-          type: boolean
-          description: 是否可以预约
-      type: object
-    ReserveInfoResponse:
-      properties:
-        data:
-          $ref: '#/definitions/ReserveInfoWrapper'
-        status:
+          description: 索书号
+        collection_cod:
           type: string
-          description: 响应状态
-      type: object
-    ReserveInfoWrapper:
-      properties:
-        reserve_info:
-          $ref: '#/definitions/ReserveInfo'
-      type: object
-    ReserveInfo:
-      properties:
-        room_id:
+          description: 馆藏地代码
+        renew_description:
           type: string
-          description: 房间ID
-        room_name:
+          description: 续借说明
+        renew_status:
           type: string
-          description: 房间名称
-        reserve_time:
+          description: 是否可以续借状态
+        sublibrary:
           type: string
-          format: date-time
-          description: 预约时间
-        reserve_status:
+          description: 分馆代码
+        title:
           type: string
-          description: 预约状态
-        reserve_user_id:
-          type: string
-          description: 预约用户ID
-        reserve_user_name:
-          type: string
-          description: 预约用户名称
-        reserve_room_id:
-          type: string
-          description: 预约房间ID
-        reserve_start_time:
-          type: string
-          format: date-time
-          description: 预约开始时间
-        reserve_end_time:
-          type: string
-          format: date-time
-          description: 预约结束时间
+          description: 题名
       type: object

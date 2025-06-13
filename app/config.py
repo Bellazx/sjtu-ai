@@ -6,10 +6,15 @@ from functools import lru_cache
 load_dotenv()
 
 class Config:
+    SERVER_NAME = '172.20.0.3:8888'  # 或您的实际域名
+    APPLICATION_ROOT = '/'
+    PREFERRED_URL_SCHEME = 'http'
     DEBUG = os.getenv('DEBUG', 'False') == 'True'
     API_BASE_URL = os.getenv('API_BASE_URL')
     API_KEY = os.getenv('API_KEY')
     API_PREFIX = os.getenv('API_PREFIX', '/api')
+    API_USERCODE = os.getenv('API_USERCODE')
+    API_PWD = os.getenv('API_PWD')
     # API_NAMESPACE = os.getenv('API_NAMESPACE', '/sjtu')
 
     @staticmethod

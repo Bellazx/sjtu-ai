@@ -1,12 +1,11 @@
 from flask import Flask
 from flask_restx import Api
-from config import Config
+from app.config import Config
 
-from app.models.schemas import init_models
-from app.api.user import init_user_api
-from app.api.book import init_book_api
-from app.api.room import init_room_api
-from app.api.api import call_api
+from models.schemas import init_models
+from api.user import init_user_api
+from api.book import init_book_api
+from api.api import call_api
 
 def create_app():
     app = Flask(__name__)
@@ -23,7 +22,7 @@ def create_app():
     # 注册API命名空间
     api.add_namespace(init_user_api(api, models))
     api.add_namespace(init_book_api(api, models))
-    api.add_namespace(init_room_api(api, models))
+    # api.add_namespace(init_room_api(api, models))
 
     return app
 
