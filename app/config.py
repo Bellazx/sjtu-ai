@@ -6,7 +6,7 @@ from functools import lru_cache
 load_dotenv()
 
 class Config:
-    SERVER_NAME = '172.20.0.3:8888'  # 或您的实际域名
+    # SERVER_NAME = '172.20.0.3:8888'  # 注释掉这行，让Flask自动处理
     APPLICATION_ROOT = '/'
     PREFERRED_URL_SCHEME = 'http'
     DEBUG = os.getenv('DEBUG', 'False') == 'True'

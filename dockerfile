@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8888
 
 # 设置启动命令
-CMD ["python", "app/__init__.py"]
+CMD ["python", "__init__.py"]

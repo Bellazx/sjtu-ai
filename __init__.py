@@ -2,10 +2,10 @@ from flask import Flask
 from flask_restx import Api
 from app.config import Config
 
-from models.schemas import init_models
-from api.user import init_user_api
-from api.book import init_book_api
-from api.api import call_api
+from app.models.schemas import init_models
+from app.api.user import init_user_api
+from app.api.book import init_book_api
+from app.api.api import call_api   
 
 def create_app():
     app = Flask(__name__)
