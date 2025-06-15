@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 
 from .api import call_api
+from app.config import Config
 
 def call_basic_info(qry_str):
     payload = {
@@ -118,7 +119,7 @@ def can_book_seat(qry_str):
         'success': True,
         'message': '查询成功',
         'data':{
-            'can_book_seat': current_app.config.Config.can_book_seat(gate_user.get('usertype'))
+            'can_book_seat': Config.can_book_seat(gate_user.get('usertype'))
         }
     }
     return {

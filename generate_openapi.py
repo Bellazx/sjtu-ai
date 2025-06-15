@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from app import create_app
+from __init__ import create_app
 import yaml
 
 # 设置项目根目录

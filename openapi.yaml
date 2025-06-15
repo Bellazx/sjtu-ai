@@ -7,6 +7,35 @@ servers:
 - url: http://172.20.0.3:8888
   description: 本地开发服务器
 paths:
+  //test/can_book_seat:
+    get:
+      summary: 获取用户能否预约（含全媒体）,通过用户学工号获取是否有预约（含全媒体）权限
+      description: ''
+      operationId: can_book_seat
+      parameters:
+      - required: true
+        in: query
+        description: 用户学工号
+        name: user_id
+        type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/ReserveCheckResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  success:
+                    type: boolean
   //test/check_book_can_renew:
     get:
       summary: 检查图书是否可以续借,根据条码判断图书是否可以被续借
@@ -36,36 +65,7 @@ paths:
                     type: string
                   success:
                     type: boolean
-  /test/can_book_seat:
-    get:
-      summary: 获取用户能否预约（含全媒体）,通过用户学工号获取是否有预约（含全媒体）权限
-      description: ''
-      operationId: can_book_seat
-      parameters:
-      - required: true
-        in: query
-        description: 用户学工号
-        name: user_id
-        type: string
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/definitions/ReserveCheckResponse'
-        '400':
-          description: 请求参数错误
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  success:
-                    type: boolean
-  /test/get_user_borrow_info:
+  //test/get_user_borrow_info:
     get:
       summary: 获取用户借阅信息,通过用户学工号获取在借所有资源的信息，根据应还时间来判断是否过期/逾期
       description: ''
@@ -94,7 +94,7 @@ paths:
                     type: string
                   success:
                     type: boolean
-  /test/get_user_info:
+  //test/get_user_info:
     get:
       summary: 获取用户信息接口,通过用户学工号查询用户信息，包含姓名、学工号、系统ID、物理卡号、NFC ID、邮箱、电话、进馆权限、借阅权限、部门、身份有效期、通讯有效期、身份类型、逾期费等信息
       description: ''
