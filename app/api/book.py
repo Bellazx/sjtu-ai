@@ -1,21 +1,22 @@
 from flask import request, current_app
 from flask_restx import Resource, Namespace
 from .api import call_api
-
+import json
 
 def call_book_renew_api(book_id):
     payload = {
-        "userCode": "dingzixuan",
-        "userPwd": "F3F8828238A7F0DDD445FE58BAF94AB3",
+        "userCode": current_app.config["API_USERCODE"],
+        "userPwd": current_app.config["API_PWD"],
         "qryType": 1,
-        "qryStr": "|".join(str(n) for n in book_id) if len(book_id) > 1 else (str(book_id[0]) if book_id else "")
+        "qryStr": book_id
 
     }
     # 调用第二个接口获取门禁信息
     renew_info_res = call_api(
-        "http://10.119.4.239/docaffiresinterface/getBookRenewStatus.ashx",
+        current_app.config["API_URL"] + "/getBookRenewStatus.ashx",
         payload
     )
+    print(renew_info_res)
     # 验证接口响应
     if not renew_info_res or renew_info_res.get('resStr') != '1':
         print("获取续借状态失败" + renew_info_res.get('msgStr'))
@@ -53,7 +54,7 @@ def call_book_renew_api(book_id):
 
 
 def init_book_api(api, models):
-    ns = Namespace('/test', description='图书馆管理系统接口')
+    ns = Namespace('/book', description='图书馆管理系统接口')
 
     @ns.route('/check_book_can_renew')
     class BookRenew(Resource):
@@ -71,24 +72,6 @@ def init_book_api(api, models):
                 }, 400
 
             return call_book_renew_api(book_id)
-            # if book_id == "book_ztr":
-            #     return {
-            #         "data": {
-            #             "can_renew": False
-            #         },
-            #         "status": "success"
-            #     }
-            # return {
-            #     "data": {
-            #         "can_renew": True
-            #     },
-            #     "status": "success"
-            # }
 
     return ns
 
-
-if __name__ == '__main__':
-    import pprint
-    book_id_list = [32086180,32003825]
-    pprint.pprint(call_book_renew_api(book_id_list))

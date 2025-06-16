@@ -16,7 +16,7 @@ def call_basic_info(qry_str):
 
     # 调用第一个接口获取基本信息
     basic_info = call_api(
-        "http://10.119.4.239/docaffiresinterface/getAlephSysID.ashx",
+        current_app.config["API_URL"] + "/getBasicInfo.ashx",
         payload
     )
 
@@ -40,15 +40,15 @@ def call_basic_info(qry_str):
 
 def call_gate_info(qry_str):
     payload = {
-        "userCode": "dingzixuan",
-        "userPwd": "F3F8828238A7F0DDD445FE58BAF94AB3",
+        "userCode": current_app.config["API_USERCODE"],
+        "userPwd": current_app.config["API_PWD"],
         "qryType": 1,
         "qryStr": qry_str
     }
 
     # 调用第二个接口获取门禁信息
     gate_info = call_api(
-        "http://10.119.4.239/docaffiresinterface/getGateInfo.ashx",
+        current_app.config["API_URL"] + "/getGateInfo.ashx",
         payload
     )
 
@@ -213,7 +213,7 @@ def format_user_info(user_info_res):
         f"电话: {user.get('userTel', '未知')}",
         "-" * 50,
         "【权限状态】",
-        f"进馆权限: {user.get('isNormal')}",
+        f"门禁权限: {user.get('isNormal')}",
         f"借阅权限: {user.get('userState')}",
         "-" * 50,
         "【身份信息】",
@@ -248,14 +248,14 @@ def format_datetime(date_str, time_str):
 
 def call_borrow_book_list_api(user_id):
     payload = {
-        "userCode": "dingzixuan",
+        "userCode": current_app.config["API_USERCODE"],
         "userPwd": "F3F8828238A7F0DDD445FE58BAF94AB3",
         "qryType": 1,
         "qryStr": user_id
     }
     # 调用第二个接口获取门禁信息
     borrow_info_res = call_api(
-        "http://10.119.4.239/docaffiresinterface/getBorrowBookListById.ashx",
+        current_app.config["API_URL"] + "/getBorrowBookListById.ashx",
         payload
     )
     # 验证接口响应
@@ -268,6 +268,7 @@ def call_borrow_book_list_api(user_id):
     borrow_info = borrow_info_res.get('retBook')
     """转换原始JSON数据到API模型格式"""
     result = []
+    overdue_count = 0
     for item in borrow_info:
         transformed = {
             'source': item.get('srcUnit', ''),
@@ -282,18 +283,21 @@ def call_borrow_book_list_api(user_id):
             'should_return_time': format_datetime(item.get('returnEndDate'), item.get('returnEndHour')),
             'call_no': item.get('callno', ''),
             'isbn': item.get('isbn', ''),
-            'material': item.get('material', '')
+            'material': item.get('material', ''),
+            'overdue': datetime.strptime(item.get('returnEndDate') + item.get('returnEndHour'), '%Y%m%d%H%M') < datetime.now()
         }
+        if transformed['overdue']:
+            overdue_count += 1
         result.append(transformed)
     return {
         'success': True,
-        'message': '查询成功，当前用户在借书本（资源）共' + str(len(result)) + '本',
+        'message': '查询成功，当前用户在借书本（资源）共' + str(len(result)) + '本，其中逾期' + str(overdue_count) + '本',
         'data': result
     }
 
 
 def init_user_api(api, models):
-    ns = Namespace('/test', description='图书馆管理系统接口')
+    ns = Namespace('/user', description='图书馆管理系统接口')
 
     @ns.route('/get_user_info')
     class UserInfo(Resource):
@@ -311,68 +315,7 @@ def init_user_api(api, models):
                 }, 400
 
             return get_merged_user_info(user_id)
-            #
-            #
-            # if user_id == "user_1234567890":
-            #     return {
-            #         "data": {
-            #             "user_id": "user_1234567890",
-            #             "user_name": "John Doe",
-            #             "user_email": "john.doe@example.com",
-            #             "user_phone": "+1234567890",
-            #             "user_address": "123 Main St, Anytown, USA",
-            #             "user_status": "expired",
-            #             "permission": "体制内读者",
-            #             "user_period_of_validity": "2024-01-01 12:00:00",
-            #             "ALeph_wallet": -1.5
-            #         },
-            #         "status": "success"
-            #     }
-            # elif user_id == "user_1234567891":
-            #     return {
-            #         "data": {
-            #             "user_id": "user_1234567891",
-            #             "user_name": "harry",
-            #             "user_email": "harry@example.com",
-            #             "user_phone": "+1234567891",
-            #             "user_address": "456 Main St, Anytown, USA",
-            #             "user_status": "active",
-            #             "permission": "体制内读者",
-            #             "user_period_of_validity": "2026-01-01 12:00:00",
-            #             "ALeph_wallet": -6.0
-            #         },
-            #         "status": "success"
-            #     }
-            # elif user_id == "user_1234567892":
-            #     return {
-            #         "data": {
-            #             "user_id": "user_1234567892",
-            #             "user_name": "Tom",
-            #             "user_email": "tom@example.com",
-            #             "user_phone": "+1234567892",
-            #             "user_address": "789 Main St, Anytown, USA",
-            #             "user_status": "active",
-            #             "permission": "校友卡",
-            #             "user_period_of_validity": "2026-01-01 12:00:00",
-            #             "ALeph_wallet": 100.0
-            #         },
-            #         "status": "success"
-            #     }
-            # else:
-            #     return {
-            #         "data": {
-            #             "user_id": "user_1234567893",
-            #             "user_name": "Maggie",
-            #             "user_email": "maggie@example.com",
-            #             "user_phone": "+1234567892",
-            #             "user_address": "789 Main St, Anytown, USA",
-            #             "user_status": "active",
-            #             "permission": "体制内读者",
-            #             "user_period_of_validity": "2026-01-01 12:00:00",
-            #             "ALeph_wallet": 100.0
-            #         },
-            #         "status": "success"
-            #     }
+ 
 
     @ns.route('/get_user_borrow_info')
     class UserBorrowInfo(Resource):
@@ -381,7 +324,7 @@ def init_user_api(api, models):
         @ns.response(200, '成功', models['borrow_info_response'])
         @ns.response(400, '错误', models['error_model'])
         def get(self):
-            """获取用户借阅信息,通过用户学工号获取在借所有资源的信息，根据应还时间来判断是否过期/逾期"""
+            """获取用户借阅信息,通过用户学工号获取在借所有资源的信息，根据overdue字段来判断是否过期/逾期"""
             user_id = request.args.get('user_id')
             if not user_id:
                 return {

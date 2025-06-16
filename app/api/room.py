@@ -2,7 +2,7 @@
 # from flask_restx import Resource, Namespace
 #
 # def init_room_api(api, models):
-#     ns = Namespace('/test', description='图书馆管理系统接口')
+#     ns = Namespace('/lib', description='图书馆管理系统接口')
 #
 #     @ns.route('/check_user_can_reserve_room')
 #     class RoomReserve(Resource):

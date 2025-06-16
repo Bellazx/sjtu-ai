@@ -28,7 +28,8 @@ def init_models(api):
         'should_return_time': fields.String(description='应还时间'),
         'call_no': fields.String(description='索书号'),
         'isbn': fields.String(description='isbn号'),
-        'material': fields.String(description='介质类型')
+        'material': fields.String(description='介质类型'),
+        'overdue': fields.Boolean(description='是否逾期')
     })
 
     # 预约信息模型

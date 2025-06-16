@@ -7,15 +7,13 @@ load_dotenv()
 
 class Config:
     # SERVER_NAME = '172.20.0.3:8888'  # 注释掉这行，让Flask自动处理
-    APPLICATION_ROOT = '/'
+    APPLICATION_ROOT = os.getenv('API_PREFIX')
     PREFERRED_URL_SCHEME = 'http'
     DEBUG = os.getenv('DEBUG', 'False') == 'True'
-    API_BASE_URL = os.getenv('API_BASE_URL')
-    API_KEY = os.getenv('API_KEY')
-    API_PREFIX = os.getenv('API_PREFIX', '/api')
+    API_URL = os.getenv('API_BASE_URL')
+    API_KEY = os.getenv('API_ENCRYPT_KEY')
     API_USERCODE = os.getenv('API_USERCODE')
     API_PWD = os.getenv('API_PWD')
-    # API_NAMESPACE = os.getenv('API_NAMESPACE', '/sjtu')
 
     @staticmethod
     @lru_cache(maxsize=1)

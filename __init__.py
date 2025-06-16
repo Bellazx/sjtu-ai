@@ -5,6 +5,7 @@ from app.config import Config
 from app.models.schemas import init_models
 from app.api.user import init_user_api
 from app.api.book import init_book_api
+from app.api.login import init_login_api
 from app.api.api import call_api   
 
 def create_app():
@@ -13,7 +14,8 @@ def create_app():
 
     api = Api(app, version='1.0', title='图书馆管理系统 API',
         description='图书馆管理系统的API接口文档',
-        doc='/docs'
+        doc='/docs',
+        prefix='/lib'
     )
     app.api = api
     # 初始化数据模型
@@ -22,6 +24,7 @@ def create_app():
     # 注册API命名空间
     api.add_namespace(init_user_api(api, models))
     api.add_namespace(init_book_api(api, models))
+    api.add_namespace(init_login_api(api, models))
     # api.add_namespace(init_room_api(api, models))
 
     return app
