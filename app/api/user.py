@@ -16,7 +16,7 @@ def call_basic_info(qry_str):
 
     # 调用第一个接口获取基本信息
     basic_info = call_api(
-        current_app.config["API_URL"] + "/getBasicInfo.ashx",
+        current_app.config["API_URL"] + "/getAlephSysID.ashx",
         payload
     )
 
@@ -258,6 +258,7 @@ def call_borrow_book_list_api(user_id):
         current_app.config["API_URL"] + "/getBorrowBookListById.ashx",
         payload
     )
+    print(borrow_info_res)
     # 验证接口响应
     if not borrow_info_res or borrow_info_res.get('resStr') != '1':
         print("获取借书列表失败" + borrow_info_res.get('msgStr'))

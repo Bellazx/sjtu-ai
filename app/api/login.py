@@ -23,10 +23,10 @@ def call_encrypt_api(qry_str, qry_type):
     
     # 验证接口响应
     if not encrypt_res or encrypt_res.get('resStr') != '1':
-        print("加密失败: " + str(encrypt_res.get('msgStr', '未知错误')))
+        print("加解密失败: " + str(encrypt_res.get('msgStr', '未知错误')))
         return {
             'success': False,
-            'message': "加密失败: " + str(encrypt_res.get('msgStr', '未知错误'))
+            'message': "加解密失败: " + str(encrypt_res.get('msgStr', '未知错误'))
         }
     
     # 解析返回结果，提取encodeStr字段

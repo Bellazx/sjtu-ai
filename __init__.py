@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_restx import Api
+from flask_cors import CORS
 from app.config import Config
 
 from app.models.schemas import init_models
@@ -12,6 +13,13 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)  # 加载配置类
 
+    # 配置跨域资源共享(CORS)
+    CORS(app, 
+         origins=app.config['CORS_ORIGINS'],  # 从配置文件获取允许的来源
+         methods=app.config['CORS_METHODS'],  # 允许的HTTP方法
+         allow_headers=app.config['CORS_ALLOW_HEADERS'],  # 允许的请求头
+         supports_credentials=app.config['CORS_SUPPORTS_CREDENTIALS']  # 支持携带认证信息
+    )
     api = Api(app, version='1.0', title='图书馆管理系统 API',
         description='图书馆管理系统的API接口文档',
         doc='/docs',

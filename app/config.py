@@ -14,6 +14,12 @@ class Config:
     API_KEY = os.getenv('API_ENCRYPT_KEY')
     API_USERCODE = os.getenv('API_USERCODE')
     API_PWD = os.getenv('API_PWD')
+    
+    # CORS配置
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*').split(',')
+    CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+    CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization', 'X-Requested-With']
+    CORS_SUPPORTS_CREDENTIALS = os.getenv('CORS_SUPPORTS_CREDENTIALS', 'True') == 'True'
 
     @staticmethod
     @lru_cache(maxsize=1)
