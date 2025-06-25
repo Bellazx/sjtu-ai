@@ -249,7 +249,7 @@ def format_datetime(date_str, time_str):
 def call_borrow_book_list_api(user_id):
     payload = {
         "userCode": current_app.config["API_USERCODE"],
-        "userPwd": "F3F8828238A7F0DDD445FE58BAF94AB3",
+        "userPwd": current_app.config["API_PWD"],
         "qryType": 1,
         "qryStr": user_id
     }
@@ -260,11 +260,23 @@ def call_borrow_book_list_api(user_id):
     )
     print(borrow_info_res)
     # 验证接口响应
-    if not borrow_info_res or borrow_info_res.get('resStr') != '1':
-        print("获取借书列表失败" + borrow_info_res.get('msgStr'))
+    if not borrow_info_res:
+        print("获取借书列表接口调用失败")
+        return {
+            'success': False,
+            'message': "获取借书列表接口调用失败"
+        }
+    if borrow_info_res.get('resStr') == '3':
+        print("未查到借阅信息" + borrow_info_res.get('msgStr'))
         return {
             'success': True,
             'message': "当前用户没有借阅图书"
+        }
+    if borrow_info_res.get('resStr') != '1':
+        print("查询借书列表出错：" + borrow_info_res.get('msgStr'))
+        return {
+            'success': False,
+            'message': "查询借书列表出错：" + borrow_info_res.get('msgStr')
         }
     borrow_info = borrow_info_res.get('retBook')
     """转换原始JSON数据到API模型格式"""
